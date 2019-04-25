@@ -2,7 +2,7 @@
 // @name            KS/MO WME MapRaid Regions
 // @author          HBiede
 // @namespace       hbiede.com
-// @description     Creates polygons for Regions in the KS/MO map raid
+// @description     Creates polygons for Regions in the KS/MO MapRaid
 // @include         /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor.*$/
 // @version         2019.04.25.001
 // @grant           none
