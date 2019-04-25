@@ -31,7 +31,7 @@ var mapLayer,
 
 function convertPoints(list) {
     return list.map(function(point) {
-        return new OL.Geometry.Point(point.lon, point.lat).transform(new OL.Projection("EPSG:4326"), Waze.map.getProjectionObject());
+        return new OL.Geometry.Point(point.lon, point.lat).transform(new OL.Projection("EPSG:4326"), W.map.getProjectionObject());
     });
 }
 
@@ -52,8 +52,7 @@ function addRaidPolygon(raidLayer, dataList) {
     };
 
     var polygon = new OL.Geometry.Polygon(new OL.Geometry.LinearRing(convertPoints(dataList.points)));
-    console.log(polygon.getCentroid().transform(Waze.map.getProjectionObject(), new OL.Projection("EPSG:4326")));
-    var vector = new OL.Feature.Vector(polygon, { name: dataList.name, centerPoint: (dataList.centerPoint ? new OL.Geometry.Point(dataList.centerPoint.lon, dataList.centerPoint.lat).transform(new OL.Projection("EPSG:4326"), Waze.map.getProjectionObject()) : polygon.getCentroid()) }, style);
+    var vector = new OL.Feature.Vector(polygon, { name: dataList.name, centerPoint: (dataList.centerPoint ? new OL.Geometry.Point(dataList.centerPoint.lon, dataList.centerPoint.lat).transform(new OL.Projection("EPSG:4326"), W.map.getProjectionObject()) : polygon.getCentroid()) }, style);
     raidLayer.addFeatures([ vector ]);
 }
 
@@ -132,7 +131,7 @@ function initMapRaidOverlay() {
     if (!W.loginManager.user) {
         W.loginManager.events.register("login", null, initMapRaidOverlay);
         W.loginManager.events.register("loginStatus", null, initMapRaidOverlay);
-        if (!Waze.loginManager.user) {
+        if (!W.loginManager.user) {
             return;
         }
     }
