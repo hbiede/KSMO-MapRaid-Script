@@ -14,9 +14,9 @@
 // Grep replacements to find-and-replace convert WKT to JSON areas:
 // ".+\(" -> "" (empty string)
 // "\(" -> "{lon: '"
-// "[[:space:]]0\)\)" -> "'}"
+// "\)\)" -> "'}"
 // "([0-9])\s([0-9])" -> "\1', lat: '\2"
-// "[[:space:]]0," -> "'}, {lon: '"
+// "," -> "'}, {lon: '"
 
 // To Change for New Raids:
 var mapRaidName      = "KS/MO MapRaid";
