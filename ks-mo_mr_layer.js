@@ -4,7 +4,7 @@
 // @namespace       hbiede.com
 // @description     Creates polygons for Regions in the KS/MO map raid
 // @include         /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor.*$/
-// @version         2.0.2
+// @version         2.0.3
 // @grant           none
 // @copyright       2019 HBiede, based on work by 2017 Glodenox, based on work by 2015 rickzabel, based on work by 2014 davielde
 // ==/UserScript==
@@ -19,9 +19,10 @@
 // "[[:space:]]0," -> "'}, {lon: '"
 
 // To Change for New Raids:
-var mapRaidName = "KS/MO MapRaid";
-var mapRaidID   = "__KS/MOMapRaid";
-var dropdownId  = "mapraidKSMODropdown";
+var mapRaidName      = "KS/MO MapRaid";
+var mapRaidID        = "__KS/MOMapRaid";
+var dropdownId       = "mapraidKSMODropdown";
+var overlayColorFill = 0; // Set to a number between 0 and 1 to adjust the opacity of the color fill for the overlay
 
 
 setTimeout(initMapRaidOverlay, 1000);
@@ -39,9 +40,9 @@ function addRaidPolygon(raidLayer, dataList) {
     var style = {
         strokeColor: dataList.color,
         strokeOpacity: 0.8,
-        strokeWidth: 3,
-        fillColor: '#FFFFFF', // Doesn't matter, opacity is set to 0
-        fillOpacity: 0,
+        strokeWidth: 5,
+        fillColor: dataList.color,
+        fillOpacity: overlayColorFill,
         label: name,
         labelOutlineColor: "Black",
         labelOutlineWidth: 3,
