@@ -4,7 +4,7 @@
 // @namespace       hbiede.com
 // @description     Creates polygons for Regions in the KS/MO map raid
 // @include         /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor.*$/
-// @version         2
+// @version         2.0.1
 // @grant           none
 // @copyright       2019 HBiede, based on work by 2017 Glodenox, based on work by 2015 rickzabel, based on work by 2014 davielde
 // ==/UserScript==
