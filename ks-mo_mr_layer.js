@@ -14,9 +14,9 @@
 // Grep replacements to find-and-replace convert WKT to JSON areas:
 // ".+\(" -> "" (empty string)
 // "\(" -> "{lon: '"
-// "\)\)" -> "'}"
+// "\)\)" -> "'}" (“0\)\)” for 3D generated WKTs)
 // "([0-9])\s([0-9])" -> "\1', lat: '\2"
-// "," -> "'}, {lon: '"
+// "," -> "'}, {lon: '" (“[[:space::]]0,” for 3D generated WKTs)
 
 // To Change for New Raids:
 var mapRaidName      = "KS/MO MapRaid";
