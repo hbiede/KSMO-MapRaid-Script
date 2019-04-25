@@ -244,7 +244,7 @@ function initMapRaidOverlay() {
         areaJumper.appendChild(areaPlaceholder);
         areaJumper.addEventListener('change', function() {
             W.map.setCenter(areaJumper.selectedOptions[0].centroid);
-            console.log(areaJumper.selectedOptions[0].centroid);
+            W.map.zoomTo(1);
             areaJumper.selectedIndex = 0;
             areaJumper.blur();
         });
@@ -253,7 +253,6 @@ function initMapRaidOverlay() {
       areaJumperRegion.label = mapRaidName;
       mapLayer.features.forEach(function(feature) {
           var area = document.createElement('option');
-        console.log(feature);
           area.textContent = feature.attributes.name;
            area.centroid = [feature.attributes.centerPoint.x, feature.attributes.centerPoint.y];
           areaJumperRegion.appendChild(area);
