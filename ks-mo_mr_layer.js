@@ -251,7 +251,7 @@ function initMapRaidOverlay() {
         areaJumper.appendChild(areaPlaceholder);
         areaJumper.addEventListener('change', function() {
             W.map.setCenter(areaJumper.selectedOptions[0].centroid);
-            W.map.zoomTo(1);
+            W.map.zoomTo(areaJumper.selectedOptions[0].zoom);
             areaJumper.selectedIndex = 0;
             areaJumper.blur();
         });
@@ -261,7 +261,8 @@ function initMapRaidOverlay() {
       mapLayer.features.forEach(function(feature) {
           var area = document.createElement('option');
           area.textContent = feature.attributes.name;
-           area.centroid = [feature.attributes.centerPoint.x, feature.attributes.centerPoint.y];
+          area.centroid = [feature.attributes.centerPoint.x, feature.attributes.centerPoint.y];
+          area.zoom = feature.attributes.zoom;
           areaJumperRegion.appendChild(area);
       });
       areaJumper.appendChild(areaJumperRegion);
