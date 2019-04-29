@@ -2,9 +2,9 @@
 // @name            KS/MO WME MapRaid Regions
 // @author          HBiede
 // @namespace       hbiede.com
-// @description     Creates polygons for Regions in the KS/MO MapRaid
+// @description     Creates polygons for Regions in the KS/MO map raid
 // @include         /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor.*$/
-// @version         2019.04.25.001
+// @version         2019.04.28.001
 // @grant           none
 // @copyright       2019 HBiede, based on work by 2017 Glodenox, based on work by 2015 rickzabel, based on work by 2014 davielde
 // ==/UserScript==
@@ -20,8 +20,7 @@
 
 // To Change for New Raids:
 let mapRaidName      = "KS/MO MapRaid";
-let mapRaidID        = "__KS/MOMapRaid";
-let dropdownId       = "mapraidKSMODropdown";
+let mapraidId        = "mapraidKSMO";
 let overlayColorFill = 0; // Set to a number between 0 and 1 to adjust the opacity of the color fill for the overlay
 let defaultZoomLevel = 1;
 
@@ -102,27 +101,25 @@ function createLayerToggler(parentGroup, checked, name, toggleCallback) {
 
 function displayCurrentRaidLocation() {
     var raidMapCenter = W.map.getCenter();
-    var raidCenterPoint = new OL.Geometry.Point(raidMapCenter.lon, raidMapCenter.lat);
-    var locationDiv = document.querySelector('#topbar-container > div > div > div.location-info-region > div');
-    var mapRaidDiv = locationDiv.querySelector('strong');
-    if (mapRaidDiv === null) {
-        mapRaidDiv = document.createElement('strong');
-        mapRaidDiv.style.marginLeft = '5px';
-        locationDiv.appendChild(mapRaidDiv);
+	var raidCenterPoint = new OL.Geometry.Point(raidMapCenter.lon, raidMapCenter.lat);
+	var locationDiv = document.querySelector('#topbar-container > div > div > div.location-info-region > div');
+	var mapRaidDiv = locationDiv.querySelector('strong');
+	if (mapRaidDiv === null) {
+		mapRaidDiv = document.createElement('strong');
+		mapRaidDiv.setAttribute("id", mapraidId + "LocationDisplay");
+		mapRaidDiv.style.marginLeft = '5px';
+		locationDiv.appendChild(mapRaidDiv);
+	}
+    if (localStorage.MapRaidKSMOVisible == "true") {
+		var i;
+		for (i = 0; i < mapLayer.features.length; i++) {
+			if (mapLayer.features[i].geometry.components[0].containsPoint(raidCenterPoint)) {
+				mapRaidDiv.textContent = '[' + mapRaidName + ' Region: ' + mapLayer.features[i].attributes.name + ']';
+				return;
+			}
+		}
     }
-
-    var i;
-    for (i = 0; i < mapLayer.features.length; i++) {
-        if (mapLayer.features[i].geometry.components[0].containsPoint(raidCenterPoint)) {
-            mapRaidDiv.textContent = '[' + mapRaidName + ' Region: ' + mapLayer.features[i].attributes.name + ']';
-            displayedArea = true;
-            return;
-        }
-    }
-    if (displayedArea) {
-        mapRaidDiv.textContent = '';
-        displayedArea = false;
-    }
+    mapRaidDiv.textContent = '';
 }
 
 function initMapRaidOverlay() {
@@ -144,11 +141,18 @@ function initMapRaidOverlay() {
 
     createLayerToggler(document.getElementById('layer-switcher-group_display').parentNode.parentNode, localStorage.MapRaidKSMOVisible == "true", mapRaidName, function(checked) {
         localStorage.MapRaidKSMOVisible = checked;
+        var areaJumper = document.getElementById(mapraidId + "Dropdown");
+        areaJumper.style.width = (checked ? "80%" : 0);
+        areaJumper.style.visibility = (checked ? "" : "hidden");
+        if (areaJumper.parentNode) {
+            areaJumper.parentNode.style.flexGrow = (checked ? "1" : "");
+        }
         mapLayer.setVisibility(checked);
+        displayCurrentRaidLocation();
     });
 
     mapLayer = new OL.Layer.Vector(mapRaidName + " Regions", {
-        uniqueName: mapRaidID
+        uniqueName: mapraidId
     });
 
     //replace groupPoints with custom coordinates, add or remove groups as needed (centerPoint and zoom can be set to choose where the dropdown moves the map to)
@@ -240,10 +244,10 @@ function initMapRaidOverlay() {
     W.map.addLayer(mapLayer);
     mapLayer.setVisibility(localStorage.MapRaidKSMOVisible == "true");
 
-    var areaJumper = document.getElementById(dropdownId);
+    var areaJumper = document.getElementById(mapraidId + "Dropdown");
     if (!areaJumper) {
         areaJumper = document.createElement('select');
-        areaJumper.id = dropdownId;
+        areaJumper.id = mapraidId + "Dropdown";
         areaJumper.style.marginTop = '4px';
         areaJumper.style.display = 'block';
         var areaPlaceholder = document.createElement('option');
@@ -267,13 +271,14 @@ function initMapRaidOverlay() {
       });
       areaJumper.appendChild(areaJumperRegion);
 
-      if (!document.getElementById(dropdownId)) {
+      if (!document.getElementById(mapraidId + "Dropdown")) {
           // Deal with new layout
           if (window.getComputedStyle(document.getElementById('edit-buttons').parentNode).display == 'flex') {
               var areaJumperContainer = document.createElement('div');
-              areaJumperContainer.style.flexGrow = '1';
+              areaJumperContainer.style.flexGrow = (localStorage.MapRaidKSMOVisible == "true" ? "1" : "");
               areaJumperContainer.style.paddingTop = '6px';
-              areaJumper.style.width = '80%';
+              areaJumper.style.width = (localStorage.MapRaidKSMOVisible == "true" ? "80%" : 0);
+              areaJumper.style.visibility = (localStorage.MapRaidKSMOVisible == "true" ? "" : "hidden");
               areaJumper.style.margin = '0 auto';
               areaJumperContainer.appendChild(areaJumper);
               document.getElementById('edit-buttons').parentNode.insertBefore(areaJumperContainer, document.getElementById('edit-buttons'));
@@ -284,6 +289,5 @@ function initMapRaidOverlay() {
 
     displayCurrentRaidLocation();
     W.map.events.register("moveend", null, displayCurrentRaidLocation);
-    W.map.events.register("zoomend", null, displayCurrentRaidLocation);
 }
 
