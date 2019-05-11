@@ -4,7 +4,7 @@
 // @namespace       hbiede.com
 // @description     Creates polygons for Regions in the KS/MO map raid
 // @include         /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor.*$/
-// @version         2019.05.10.001
+// @version         2019.05.10.002
 // @grant           none
 // @copyright       2019 HBiede, based on work by 2017 Glodenox, based on work by 2015 rickzabel, based on work by 2014 davielde
 // ==/UserScript==
@@ -21,7 +21,7 @@
 // To Change for New Raids:
 const mapRaidName            = "KS/MO MapRaid";
 const mapraidId              = "mapraidKSMO";
-const overlayColorFill       = 0.4; // Set to a number between 0 and 1 to adjust the opacity of the color fill for the overlay
+const overlayColorFill       = 0.2; // Set to a number between 0 and 1 to adjust the opacity of the color fill for the overlay
 const defaultZoomLevel       = 1; // Default zoom level for when a new region is selected from the dropdown. Set to -1 to leave the zoom level unchanged
 const polygonStrokeWidth     = 5; // Set the width of the line used to delimit one region from another
 const overlayFillOnByDefault = false;
@@ -142,6 +142,7 @@ function displayCurrentRaidLocation() {
 		for (i = 0; i < mapLayer.features.length; i++) {
 			if (mapLayer.features[i].geometry.components[0].containsPoint(raidCenterPoint)) {
 				mapRaidDiv.textContent = '[' + mapRaidName + ' Region: ' + mapLayer.features[i].attributes.name + ']';
+				mapRaidDiv.style.color = (mapLayer.features[i].style.fillColor && localStorage.MapRaidKSMOFill == "true" ? mapLayer.features[i].style.fillColor : "#FFF"); // color the top bar text with the region color if area fill is enabled
 				return;
 			}
 		}
