@@ -327,4 +327,3 @@ function initMapRaidOverlay() {
     displayCurrentRaidLocation();
     W.map.events.register("moveend", null, displayCurrentRaidLocation);
 }
-
