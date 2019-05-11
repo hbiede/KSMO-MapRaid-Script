@@ -4,7 +4,7 @@
 // @namespace       hbiede.com
 // @description     Creates polygons for Regions in the KS/MO map raid
 // @include         /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor.*$/
-// @version         2019.05.06.001
+// @version         2019.05.10.001
 // @grant           none
 // @copyright       2019 HBiede, based on work by 2017 Glodenox, based on work by 2015 rickzabel, based on work by 2014 davielde
 // ==/UserScript==
@@ -19,11 +19,12 @@
 // "," -> "'}, {lon: '" (“[[:space::]]0,” for 3D generated WKTs)
 
 // To Change for New Raids:
-let mapRaidName        = "KS/MO MapRaid";
-let mapraidId          = "mapraidKSMO";
-let overlayColorFill   = 0; // Set to a number between 0 and 1 to adjust the opacity of the color fill for the overlay
-let defaultZoomLevel   = 1; // Default zoom level for when a new region is selected from the dropdown. Set to -1 to leave the zoom level unchanged
-let polygonStrokeWidth = 5; // Set the width of the line used to delimit one region from another
+const mapRaidName            = "KS/MO MapRaid";
+const mapraidId              = "mapraidKSMO";
+const overlayColorFill       = 0.4; // Set to a number between 0 and 1 to adjust the opacity of the color fill for the overlay
+const defaultZoomLevel       = 1; // Default zoom level for when a new region is selected from the dropdown. Set to -1 to leave the zoom level unchanged
+const polygonStrokeWidth     = 5; // Set the width of the line used to delimit one region from another
+const overlayFillOnByDefault = false;
 
 
 setTimeout(initMapRaidOverlay, 1000);
@@ -42,7 +43,7 @@ function addRaidPolygon(raidLayer, dataList) {
         strokeOpacity: 0.8,
         strokeWidth: 5,
         fillColor: dataList.color,
-        fillOpacity: overlayColorFill,
+        fillOpacity: (localStorage.MapRaidKSMOFill == "true" ? overlayColorFill : 0),
         label: name,
     };
 
@@ -51,14 +52,16 @@ function addRaidPolygon(raidLayer, dataList) {
     raidLayer.addFeatures([ vector ]);
 }
 
-function createLayerToggler(parentGroup, checked, name, toggleCallback) {
+function createLayerToggler(parentGroup, checked, checked2, name, toggleCallback, toggleCallback2) {
     var normalizedName = name.toLowerCase().replace(/\s/g, '');
     var group = document.createElement('li');
     var groupToggler = document.createElement('div');
     groupToggler.className = 'controls-container toggler';
+
+    // Main selector
     var groupSwitch = document.createElement('input');
     groupSwitch.id = 'layer-switcher-group_' + normalizedName;
-    groupSwitch.className = 'layer-switcher-group_' + normalizedName + ' toggle';
+    groupSwitch.className = 'layer-switcher-group_' + normalizedName + '_toggle';
     groupSwitch.type = 'checkbox';
     groupSwitch.checked = checked;
     groupSwitch.addEventListener('click', function() { toggleCallback(groupSwitch.checked); });
@@ -73,12 +76,43 @@ function createLayerToggler(parentGroup, checked, name, toggleCallback) {
     groupLabelText.appendChild(document.createTextNode(name));
     groupLabel.appendChild(groupLabelText);
     groupToggler.appendChild(groupLabel);
+
+    // Overlay fill selector
+    var group2Div = document.createElement('div');
+    group2Div.className = 'controls-container toggler';
+    group2Div.style.paddingLeft = "20px";
+    var groupSwitch2 = document.createElement('input');
+    groupSwitch2.id = 'layer-switcher-group_' + normalizedName + '_fill';
+    groupSwitch2.className = 'layer-switcher-group_' + normalizedName + '_fill_toggle';
+    groupSwitch2.type = 'checkbox';
+    groupSwitch2.checked = checked2;
+    groupSwitch2.disabled = !checked;
+    groupSwitch2.addEventListener('click', function() { toggleCallback2(groupSwitch2.checked); });
+    group2Div.appendChild(groupSwitch2);
+    var groupLabel2 = document.createElement('label');
+    groupLabel2.htmlFor = groupSwitch2.id;
+    groupLabel2.style.display = 'block';
+    var groupLabelText2 = document.createElement('div');
+    groupLabelText2.className = 'label-text';
+    groupLabelText2.style.textOverflow = 'ellipsis';
+    groupLabelText2.style.overflowX = 'hidden';
+    groupLabelText2.appendChild(document.createTextNode("Fill area"));
+    groupLabel2.appendChild(groupLabelText2);
+    group2Div.appendChild(groupLabel2);
+    groupToggler.appendChild(group2Div);
+
     group.appendChild(groupToggler);
     if (parentGroup !== null) {
         parentGroup.querySelector('input.toggle').addEventListener('click', function(e) {
             groupSwitch.disabled = !e.target.checked;
             if (toggleCallback) {
                 toggleCallback(groupSwitch.checked && e.target.checked);
+            }
+        });
+        parentGroup.querySelector('input.toggle').addEventListener('click', function(e) {
+            groupSwitch2.disabled = !e.target.checked;
+            if (toggleCallback2) {
+                toggleCallback2(groupSwitch2.checked && e.target.checked);
             }
         });
         parentGroup.querySelector('ul.children').appendChild(group);
@@ -129,22 +163,13 @@ function initMapRaidOverlay() {
         }
     }
 
-    // establish a stored variable to track checked status of the display toggle switch
+    // establish stored variables to track checked status of the display toggle switches
     if (localStorage.MapRaidKSMOVisible === undefined) {
         localStorage.MapRaidKSMOVisible = true;
     }
-
-    createLayerToggler(document.getElementById('layer-switcher-group_display').parentNode.parentNode, localStorage.MapRaidKSMOVisible == "true", mapRaidName, function(checked) {
-        localStorage.MapRaidKSMOVisible = checked;
-        var areaJumper = document.getElementById(mapraidId + "Dropdown");
-        areaJumper.style.width = (checked ? "80%" : 0);
-        areaJumper.style.visibility = (checked ? "" : "hidden");
-        if (areaJumper.parentNode) {
-            areaJumper.parentNode.style.flexGrow = (checked ? "1" : "");
-        }
-        mapLayer.setVisibility(checked);
-        displayCurrentRaidLocation();
-    });
+    if (localStorage.MapRaidKSMOFill === undefined) {
+        localStorage.MapRaidKSMOFill = overlayFillOnByDefault;
+    }
 
     mapLayer = new OL.Layer.Vector(mapRaidName + " Regions", {
         uniqueName: mapraidId
@@ -223,12 +248,38 @@ function initMapRaidOverlay() {
                             points: [{lon: '-89.5017910494998', lat: '37.5588957193232'}, {lon: '-89.5124', lat: '37.52981'}, {lon: '-89.471201', lat: '37.466473'}, {lon: '-89.42594', lat: '37.407471'}, {lon: '-89.428185', lat: '37.356158'}, {lon: '-89.4736794345412', lat: '37.3348539021946'}, {lon: '-89.49516', lat: '37.324795'}, {lon: '-89.517032', lat: '37.28192'}, {lon: '-89.482889284644', lat: '37.2609507184141'}, {lon: '-89.470525', lat: '37.253357'}, {lon: '-89.456105', lat: '37.18812'}, {lon: '-89.384175', lat: '37.103267'}, {lon: '-89.359456', lat: '37.042606'}, {lon: '-89.307436691173', lat: '37.0287594496279'}, {lon: '-89.375064', lat: '36.964947'}, {lon: '-89.465393', lat: '36.935729'}, {lon: '-89.501683', lat: '36.906262'}, {lon: '-89.519809', lat: '36.869617'}, {lon: '-89.519701', lat: '36.847896'}, {lon: '-89.373741', lat: '36.702948'}, {lon: '-89.327319777009', lat: '36.6239462887705'}, {lon: '-89.378694', lat: '36.622292'}, {lon: '-89.407906', lat: '36.562345'}, {lon: '-89.479346', lat: '36.566253'}, {lon: '-89.544434', lat: '36.57451'}, {lon: '-89.571481', lat: '36.538087'}, {lon: '-89.539232', lat: '36.497934'}, {lon: '-89.521021', lat: '36.461934'}, {lon: '-89.542337', lat: '36.420103'}, {lon: '-89.51038', lat: '36.378356'}, {lon: '-89.522695', lat: '36.344789'}, {lon: '-89.5450313339691', lat: '36.344271398663'}, {lon: '-89.600544', lat: '36.342985'}, {lon: '-89.611819', lat: '36.309088'}, {lon: '-89.554289', lat: '36.277751'}, {lon: '-89.602374', lat: '36.238106'}, {lon: '-89.678046', lat: '36.248284'}, {lon: '-89.69263', lat: '36.224959'}, {lon: '-89.6276414416754', lat: '36.185460316606'}, {lon: '-89.623804', lat: '36.183128'}, {lon: '-89.592102', lat: '36.135637'}, {lon: '-89.64302', lat: '36.10362'}, {lon: '-89.680029', lat: '36.082494'}, {lon: '-89.692437', lat: '36.020507'}, {lon: '-89.733095', lat: '36.000608'}, {lon: '-89.901183', lat: '35.999365'}, {lon: '-89.9593752951737', lat: '35.9990141101569'}, {lon: '-90.103842', lat: '35.998143'}, {lon: '-90.2889479152728', lat: '35.9965140042114'}, {lon: '-90.368718', lat: '35.995812'}, {lon: '-90.339343', lat: '36.047112'}, {lon: '-90.294492', lat: '36.112949'}, {lon: '-90.235585', lat: '36.139474'}, {lon: '-90.220425', lat: '36.184764'}, {lon: '-90.1891279822169', lat: '36.1989866086674'}, {lon: '-90.155928', lat: '36.214074'}, {lon: '-90.114922', lat: '36.265595'}, {lon: '-90.06398', lat: '36.303038'}, {lon: '-90.063526', lat: '36.356911'}, {lon: '-90.066136', lat: '36.386272'}, {lon: '-90.131038', lat: '36.415069'}, {lon: '-90.141399', lat: '36.459874'}, {lon: '-90.153871', lat: '36.495344'}, {lon: '-90.2207490539154', lat: '36.4959375921945'}, {lon: '-90.494575', lat: '36.498368'}, {lon: '-90.5761790655673', lat: '36.498405927798'}, {lon: '-90.765672', lat: '36.498494'}, {lon: '-90.7842441551312', lat: '36.4984622001291'}, {lon: '-91.017974', lat: '36.498062'}, {lon: '-91.1265388745647', lat: '36.4977977010194'}, {lon: '-91.404915', lat: '36.49712'}, {lon: '-91.4071374435175', lat: '36.4971407119486'}, {lon: '-91.4500049181374', lat: '36.4975402131847'}, {lon: '-91.64259', lat: '36.499335'}, {lon: '-91.6723424564437', lat: '36.4992566337989'}, {lon: '-91.985802', lat: '36.498431'}, {lon: '-92.1204291043881', lat: '36.4981931239997'}, {lon: '-92.1503062495012', lat: '36.4981403333242'}, {lon: '-92.350277', lat: '36.497787'}, {lon: '-92.5291365810437', lat: '36.4981656829853'}, {lon: '-92.564238', lat: '36.49824'}, {lon: '-92.7723338933721', lat: '36.4980831540794'}, {lon: '-92.764869', lat: '36.806097'}, {lon: '-92.909336', lat: '36.809178'}, {lon: '-92.903273', lat: '37.070651'}, {lon: '-92.82467', lat: '37.068674'}, {lon: '-92.685867', lat: '37.067051'}, {lon: '-92.686671', lat: '37.481545'}, {lon: '-92.252261', lat: '37.472944'}, {lon: '-92.249463', lat: '37.604543'}, {lon: '-92.183261', lat: '37.605243'}, {lon: '-92.029258', lat: '37.602542'}, {lon: '-91.809105', lat: '37.598863'}, {lon: '-91.754795', lat: '37.598768'}, {lon: '-91.75504', lat: '37.42411'}, {lon: '-91.646626', lat: '37.422731'}, {lon: '-91.211863', lat: '37.415277'}, {lon: '-91.210984', lat: '37.501911'}, {lon: '-91.314236', lat: '37.505132'}, {lon: '-91.312458', lat: '37.592824'}, {lon: '-91.155073', lat: '37.588092'}, {lon: '-91.153345', lat: '37.69734'}, {lon: '-91.146521', lat: '37.740811'}, {lon: '-91.100017', lat: '37.740012'}, {lon: '-90.645135', lat: '37.734813'}, {lon: '-90.63998', lat: '38.076548'}, {lon: '-90.628192', lat: '38.007962'}, {lon: '-90.416022', lat: '38.042315'}, {lon: '-90.253076', lat: '38.115538'}, {lon: '-90.2527463239757', lat: '38.1277738262293'}, {lon: '-90.252484', lat: '38.127571'}, {lon: '-90.218708', lat: '38.094365'}, {lon: '-90.2057286258827', lat: '38.0882331831086'}, {lon: '-90.126006', lat: '38.05057'}, {lon: '-90.080959', lat: '38.015428'}, {lon: '-90.008353', lat: '37.970179'}, {lon: '-89.95491', lat: '37.966647'}, {lon: '-89.974221', lat: '37.919217'}, {lon: '-89.933095790915', lat: '37.8800990582524'}, {lon: '-89.923185', lat: '37.870672'}, {lon: '-89.851048', lat: '37.90398'}, {lon: '-89.782035', lat: '37.855092'}, {lon: '-89.696559', lat: '37.814337'}, {lon: '-89.6872213808531', lat: '37.7964067184393'}, {lon: '-89.667993', lat: '37.759484'}, {lon: '-89.591289', lat: '37.723599'}, {lon: '-89.521948', lat: '37.696475'}, {lon: '-89.506563', lat: '37.62505'}, {lon: '-89.494051', lat: '37.580116'}, {lon: '-89.4977459260392', lat: '37.5699859139282'}, {lon: '-89.5017910494998', lat: '37.5588957193232'}]
                         }];
 
-    groupsData.forEach(function(groupData){
+    groupsData.forEach(function(groupData) {
     	addRaidPolygon(mapLayer, groupData);
     });
 
     W.map.addLayer(mapLayer);
     mapLayer.setVisibility(localStorage.MapRaidKSMOVisible == "true");
+
+    createLayerToggler(document.getElementById('layer-switcher-group_display').parentNode.parentNode, localStorage.MapRaidKSMOVisible == "true", localStorage.MapRaidKSMOFill == "true", mapRaidName, function(checked) {
+        localStorage.MapRaidKSMOVisible = checked;
+        var fillCheckBox = document.getElementById('layer-switcher-group_' + mapRaidName.toLowerCase().replace(/\s/g, '') + '_fill');
+        if (fillCheckBox) fillCheckBox.disabled = !checked;
+        var areaJumper = document.getElementById(mapraidId + "Dropdown");
+        areaJumper.style.width = (checked ? "80%" : 0);
+        areaJumper.style.visibility = (checked ? "" : "hidden");
+        if (areaJumper.parentNode) {
+            areaJumper.parentNode.style.flexGrow = (checked ? "1" : "");
+        }
+        mapLayer.setVisibility(checked);
+        displayCurrentRaidLocation();
+    }, function(checked) {
+        localStorage.MapRaidKSMOFill = checked;
+        console.log(mapLayer.features);
+        var newFeatures = [];
+        mapLayer.features.forEach(function(feature) {
+            var newFeature = feature.clone();
+            newFeature.style.fillOpacity = (checked ? overlayColorFill : 0);
+            newFeatures.push(newFeature);
+        });
+        mapLayer.destroyFeatures();
+        mapLayer.addFeatures(newFeatures);
+        displayCurrentRaidLocation();
+    });
 
     var areaJumper = document.getElementById(mapraidId + "Dropdown");
     if (!areaJumper) {
