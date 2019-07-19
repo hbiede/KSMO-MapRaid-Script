@@ -289,7 +289,7 @@ function initMapRaidOverlay() {
         areaJumper.style.marginTop = '4px';
         areaJumper.style.display = 'block';
         var areaPlaceholder = document.createElement('option');
-        areaPlaceholder.textContent = 'Jump to MapRaid Area';
+        areaPlaceholder.textContent = 'Jump to..';
         areaJumper.appendChild(areaPlaceholder);
         areaJumper.addEventListener('change', function() {
             W.map.setCenter(areaJumper.selectedOptions[0].centroid);
