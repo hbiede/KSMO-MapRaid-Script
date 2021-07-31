@@ -13,11 +13,11 @@
 // overhauled for KS/MO MapRaid by HBiede, reused in subsequent raids
 
 // Grep replacements to find-and-replace convert WKT to JSON areas:
-// ".+\(" -> "" (empty string)
-// "\(" -> "{lon: '"
-// "\)\)" -> "'}" (“0\)\)” for 3D generated WKTs)
-// "([0-9])\s([0-9])" -> "\1', lat: '\2"
+// ".+\(" -> "{lon: '"
+// "\)+" -> "'}" (“0\)\)” for 3D generated WKTs)
+// "([0-9\.\-])\s([0-9\.\-])" -> "\1'~~~ lat: '\2"
 // "," -> "'}, {lon: '" (“[[:space::]]0,” for 3D generated WKTs)
+// "~~~" -> ","
 
 // To Change for New Raids:
 const mapRaidName            = 'KS/MO MapRaid';
@@ -68,7 +68,7 @@ const addRaidPolygon = (raidLayer, dataList) => {
 
 const createLayerToggler = (parentGroup, checked, checked2, name, toggleCallback, toggleCallback2) => {
   WazeWrap.Interface.AddLayerCheckbox('places', name.replace('/', '-'), checked, toggleCallback, mapLayer);
-  WazeWrap.Interface.AddLayerCheckbox('places', 'Fill area', checked2, toggleCallback2);
+  WazeWrap.Interface.AddLayerCheckbox('places', 'Fill raid areas', checked2, toggleCallback2);
 };
 
 const displayCurrentRaidLocation = () => {
